@@ -5,7 +5,6 @@ import 'views/index_screen.dart';
 import 'views/owner_dashboard.dart';
 import 'views/driver_dashboard.dart';
 import 'views/student_dashboard.dart';
-import 'views/widgets/driverWidgets/assigned_trips.dart';
 
 Future<void> main() async {
   await dotenv.load(fileName: "../.env");
@@ -25,11 +24,8 @@ class MyApp extends StatelessWidget {
         '/dashboard/owner': (context) => const OwnerDashboard(),
         '/dashboard/driver': (context) => const DriverDashboard(),
         '/dashboard/student': (context) => const StudentDashboard(),
-        '/dashboard/driver/assigned-trips': (context) => const AssignedTripsToday(
-          trips: ['Trip to School', 'Trip to Campus'], // Replace later with dynamic data
-        ),
+        // ✅ Removed assigned-trips route because it's now a section
       },
-
     );
   }
 }
