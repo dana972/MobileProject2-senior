@@ -29,22 +29,62 @@ class _StudentDashboardState extends State<StudentDashboard> {
   Map<String, TimeOfDay?> _weeklyMorningTimes = {};
   Map<String, TimeOfDay?> _weeklyReturnTimes = {};
 
-  // Student Info Form
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _homeLocationController = TextEditingController();
-  final TextEditingController _destinationController = TextEditingController();
-
   String _activeSection = 'dashboard';
 
   @override
+  void initState() {
+    super.initState();
+    _initDashboard();
+  }
+
+  @override
   void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
-    _homeLocationController.dispose();
-    _destinationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _initDashboard() async {
+    await _loadAttendance();
+    await _loadWeeklySchedule();
+  }
+
+  Future<void> _loadAttendance() async {
+    final data = await ApiService.fetchAttendance();
+    if (data == null) return;
+
+    setState(() {
+      _todayMorningAttendance = data['today']['attendance_morning'] ?? false;
+      _todayReturnAttendance = data['today']['attendance_return'] ?? false;
+      _tomorrowMorningAttendance = data['tomorrow']['attendance_morning'] ?? false;
+      _tomorrowReturnAttendance = data['tomorrow']['attendance_return'] ?? false;
+
+      _todayMorningTime = _parseTime(data['today']['morning_time']);
+      _todayReturnTime = _parseTime(data['today']['return_time']);
+      _tomorrowMorningTime = _parseTime(data['tomorrow']['morning_time']);
+      _tomorrowReturnTime = _parseTime(data['tomorrow']['return_time']);
+    });
+  }
+
+  TimeOfDay? _parseTime(String? timeString) {
+    if (timeString == null) return null;
+    final parts = timeString.split(':');
+    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+  }
+
+  String _formatTimeForApi(TimeOfDay time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}:00';
+  }
+
+  Future<void> _loadWeeklySchedule() async {
+    final weeklyData = await ApiService.fetchWeeklySchedule();
+
+    setState(() {
+      for (final item in weeklyData) {
+        final int dayNum = item['day_of_week'];
+        final String dayName = _daysOfWeek[dayNum - 1];
+        _weeklyMorningTimes[dayName] = _parseTime(item['morning_time']);
+        _weeklyReturnTimes[dayName] = _parseTime(item['return_time']);
+      }
+    });
   }
 
   Future<void> _pickTime({
@@ -81,6 +121,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
       context: context,
       initialTime: TimeOfDay.now(),
     );
+
     if (picked != null) {
       setState(() {
         if (isMorning) {
@@ -89,6 +130,21 @@ class _StudentDashboardState extends State<StudentDashboard> {
           _weeklyReturnTimes[day] = picked;
         }
       });
+
+      final TimeOfDay morning = _weeklyMorningTimes[day] ?? TimeOfDay(hour: 7, minute: 0);
+      final TimeOfDay returnT = _weeklyReturnTimes[day] ?? TimeOfDay(hour: 15, minute: 0);
+
+      final success = await ApiService.updateWeeklySchedule(
+        dayOfWeek: day,
+        morningTime: _formatTimeForApi(morning),
+        returnTime: _formatTimeForApi(returnT),
+      );
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Updated $day schedule")),
+        );
+      }
     }
   }
 
@@ -99,6 +155,21 @@ class _StudentDashboardState extends State<StudentDashboard> {
     return DateFormat.jm().format(dt);
   }
 
+  Future<bool> _confirmUpdate(BuildContext context, String title) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Confirm Update'),
+        content: Text('Are you sure you want to update $title?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('OK')),
+        ],
+      ),
+    ) ??
+        false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -106,9 +177,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
       drawer: _buildDrawer(context),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: _activeSection == 'dashboard'
-            ? _buildDashboardContent()
-            : _buildAssignedTripContent(),
+        child: _activeSection == 'dashboard' ? _buildDashboardContent() : _buildAssignedTripContent(),
       ),
     );
   }
@@ -123,6 +192,9 @@ class _StudentDashboardState extends State<StudentDashboard> {
           title: 'Morning Attendance (Today)',
           value: _todayMorningAttendance,
           onChanged: (val) async {
+            bool confirmed = await _confirmUpdate(context, "today's morning attendance");
+            if (!confirmed) return;
+
             final success = await ApiService.updateAttendance(
               date: DateTime.now().toIso8601String().split('T')[0],
               isMorning: true,
@@ -130,6 +202,9 @@ class _StudentDashboardState extends State<StudentDashboard> {
             );
             if (success) {
               setState(() => _todayMorningAttendance = val);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Morning attendance updated")),
+              );
             }
           },
         ),
@@ -180,7 +255,6 @@ class _StudentDashboardState extends State<StudentDashboard> {
             }
           },
         ),
-
         const SizedBox(height: 24),
         Text("Today's Schedule", style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 8),
@@ -227,13 +301,11 @@ class _StudentDashboardState extends State<StudentDashboard> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Today's schedule updated")),
                 );
-                await _loadAttendance(); // ⬅️ refresh data after update
-
+                await _loadAttendance();
               }
             }
           },
         ),
-
         const SizedBox(height: 24),
         Text("Tomorrow's Schedule", style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 8),
@@ -280,66 +352,10 @@ class _StudentDashboardState extends State<StudentDashboard> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Tomorrow's schedule updated")),
                 );
-                await _loadAttendance(); // ⬅️ refresh data after update
-
+                await _loadAttendance();
               }
             }
           },
-        ),
-
-        const SizedBox(height: 24),
-        Text("Edit My Info", style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 8),
-        Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: "Student Name",
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _phoneController,
-                decoration: const InputDecoration(
-                  labelText: "Phone Number",
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _homeLocationController,
-                decoration: const InputDecoration(
-                  labelText: "Home Location",
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _destinationController,
-                decoration: const InputDecoration(
-                  labelText: "Destination",
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Info saved successfully')),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.save),
-                label: const Text("Save"),
-              ),
-            ],
-          ),
         ),
         const SizedBox(height: 24),
         Text("Weekly Schedule", style: Theme.of(context).textTheme.titleLarge),
@@ -370,14 +386,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
                   Padding(padding: const EdgeInsets.all(8), child: Text(day)),
                   Padding(padding: const EdgeInsets.all(8), child: Text(_formatTime(_weeklyMorningTimes[day]))),
                   Padding(padding: const EdgeInsets.all(8), child: Text(_formatTime(_weeklyReturnTimes[day]))),
-                  IconButton(
-                    icon: const Icon(Icons.access_time),
-                    onPressed: () => _editScheduleTime(context, day, true),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.access_time),
-                    onPressed: () => _editScheduleTime(context, day, false),
-                  ),
+                  IconButton(icon: const Icon(Icons.access_time), onPressed: () => _editScheduleTime(context, day, true)),
+                  IconButton(icon: const Icon(Icons.access_time), onPressed: () => _editScheduleTime(context, day, false)),
                 ],
               );
             }).toList(),
@@ -412,7 +422,11 @@ class _StudentDashboardState extends State<StudentDashboard> {
     );
   }
 
-  Widget _buildAttendanceCard({required String title, required bool value, required ValueChanged<bool> onChanged}) {
+  Widget _buildAttendanceCard({
+    required String title,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
     return Card(
       elevation: 3,
       child: ListTile(
@@ -434,7 +448,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
         children: [
           const DrawerHeader(
             decoration: BoxDecoration(color: Colors.blue),
-            child: Text('Student Name', style: TextStyle(color: Colors.white, fontSize: 24)),
+            child: Text('Student', style: TextStyle(color: Colors.white, fontSize: 24)),
           ),
           ListTile(
             leading: const Icon(Icons.dashboard),
@@ -478,39 +492,4 @@ class _StudentDashboardState extends State<StudentDashboard> {
       ),
     );
   }
-  @override
-  void initState() {
-    super.initState();
-    _loadAttendance();
-  }
-
-  Future<void> _loadAttendance() async {
-    final data = await ApiService.fetchAttendance();
-
-    if (data == null) return;
-
-    setState(() {
-      _todayMorningAttendance = data['today']['attendance_morning'] ?? false;
-      _todayReturnAttendance = data['today']['attendance_return'] ?? false;
-      _tomorrowMorningAttendance = data['tomorrow']['attendance_morning'] ?? false;
-      _tomorrowReturnAttendance = data['tomorrow']['attendance_return'] ?? false;
-
-      _todayMorningTime = _parseTime(data['today']['morning_time']);
-      _todayReturnTime = _parseTime(data['today']['return_time']);
-      _tomorrowMorningTime = _parseTime(data['tomorrow']['morning_time']);
-      _tomorrowReturnTime = _parseTime(data['tomorrow']['return_time']);
-    });
-  }
-
-  TimeOfDay? _parseTime(String? timeString) {
-    if (timeString == null) return null;
-    final parts = timeString.split(':');
-    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
-  }
-  String _formatTimeForApi(TimeOfDay time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}:00';
-  }
-
-
 }
-

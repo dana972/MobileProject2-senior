@@ -9,9 +9,6 @@ class ApiService {
   static final String studentUrl = dotenv.env['STUDENT_API_URL'] ?? 'http://127.0.0.1:5000/api/student';
   static final String driverUrl = dotenv.env['DRIVER_API_URL'] ?? 'http://127.0.0.1:5000/api/driver';
 
-  // =======================
-  // SIGNUP
-  // =======================
   static Future<Map<String, dynamic>> signup({
     required String fullName,
     required String phoneNumber,
@@ -45,9 +42,6 @@ class ApiService {
     }
   }
 
-  // =======================
-  // LOGIN + TOKEN SAVE
-  // =======================
   static Future<Map<String, dynamic>> login({
     required String phoneNumber,
     required String password,
@@ -64,12 +58,10 @@ class ApiService {
 
       if (response.statusCode == 200 && response.body.isNotEmpty) {
         final data = jsonDecode(response.body);
-
         if (data.containsKey('token')) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('auth_token', data['token']);
         }
-
         return data;
       } else {
         return {
@@ -86,17 +78,10 @@ class ApiService {
     }
   }
 
-  // =======================
-  // FETCH ATTENDANCE (Web-safe)
-  // =======================
   static Future<Map<String, dynamic>?> fetchAttendance() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
-
-    if (token == null) {
-      print('❌ No token found');
-      return null;
-    }
+    if (token == null) return null;
 
     final client = BrowserClient();
     try {
@@ -107,61 +92,18 @@ class ApiService {
           'Accept': 'application/json',
         },
       );
-
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        print('❌ Error fetching attendance: ${response.statusCode}');
         return null;
       }
-    } catch (e) {
-      print('❌ Exception fetching attendance: $e');
+    } catch (_) {
       return null;
     } finally {
       client.close();
     }
   }
 
-  // =======================
-  // UPDATE DRIVER INFO
-  // =======================
-  static Future<Map<String, dynamic>> updateDriverInfo({
-    required String oldPhoneNumber,
-    required String fullName,
-    required String newPhoneNumber,
-    required String license,
-  }) async {
-    try {
-      final response = await http.put(
-        Uri.parse('$driverUrl/update/$oldPhoneNumber'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'full_name': fullName,
-          'new_phone_number': newPhoneNumber,
-          'license': license,
-        }),
-      );
-
-      if (response.body.isNotEmpty) {
-        return jsonDecode(response.body);
-      } else {
-        return {
-          'success': false,
-          'message': 'Empty response from server',
-          'status': response.statusCode,
-        };
-      }
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Update failed: $e',
-      };
-    }
-  }
-
-  // =======================
-  // UPDATE ATTENDANCE
-  // =======================
   static Future<bool> updateAttendance({
     required String date,
     required bool isMorning,
@@ -169,7 +111,6 @@ class ApiService {
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
-
     if (token == null) return false;
 
     final current = await fetchAttendance();
@@ -195,65 +136,47 @@ class ApiService {
           'attendance_return': attendanceReturn,
         }),
       );
-
       return response.statusCode == 200;
-    } catch (e) {
-      print('❌ Error updating attendance: $e');
+    } catch (_) {
       return false;
     } finally {
       client.close();
     }
-
   }
 
-  // =======================
-  // FETCH SCHEDULE (morning/return times)
-  // =======================
   static Future<Map<String, dynamic>?> fetchSchedule(String date) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
-
-    if (token == null) {
-      print('❌ No token found for schedule');
-      return null;
-    }
+    if (token == null) return null;
 
     final client = BrowserClient();
     try {
-      final uri = Uri.parse('$studentUrl/schedule?date=$date');
       final response = await client.get(
-        uri,
+        Uri.parse('$studentUrl/schedule?date=$date'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
         },
       );
-
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        print('❌ Error fetching schedule: ${response.statusCode}');
         return null;
       }
-    } catch (e) {
-      print('❌ Exception fetching schedule: $e');
+    } catch (_) {
       return null;
     } finally {
       client.close();
     }
   }
 
-  // =======================
-  // UPDATE SCHEDULE (override or delete)
-  // =======================
   static Future<bool> updateSchedule({
     required String date,
-    required String morningTime,  // format: "HH:mm:ss"
-    required String returnTime,   // format: "HH:mm:ss"
+    required String morningTime,
+    required String returnTime,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
-
     if (token == null) return false;
 
     final client = BrowserClient();
@@ -270,20 +193,77 @@ class ApiService {
           'return_time': returnTime,
         }),
       );
-
-      if (response.statusCode == 200) {
-        print('✅ Schedule updated');
-        return true;
-      } else {
-        print('❌ Failed to update schedule: ${response.statusCode}');
-        return false;
-      }
-    } catch (e) {
-      print('❌ Exception updating schedule: $e');
+      return response.statusCode == 200;
+    } catch (_) {
       return false;
     } finally {
       client.close();
     }
   }
 
+  static Future<List<dynamic>> fetchWeeklySchedule() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token == null) return [];
+
+    final client = BrowserClient();
+    try {
+      final response = await client.get(
+        Uri.parse('$studentUrl/weekly-schedule'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+      return response.statusCode == 200 ? jsonDecode(response.body) : [];
+    } catch (_) {
+      return [];
+    } finally {
+      client.close();
+    }
+  }
+
+  static Future<bool> updateWeeklySchedule({
+    required String dayOfWeek,
+    required String morningTime,
+    required String returnTime,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token == null) return false;
+
+    final dayMap = {
+      "Monday": 1,
+      "Tuesday": 2,
+      "Wednesday": 3,
+      "Thursday": 4,
+      "Friday": 5,
+      "Saturday": 6,
+      "Sunday": 7,
+    };
+
+    final dayNumber = dayMap[dayOfWeek];
+    if (dayNumber == null) return false;
+
+    final client = BrowserClient();
+    try {
+      final response = await client.post(
+        Uri.parse('$studentUrl/update-weekly-schedule'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'day_of_week': dayNumber,
+          'morning_time': morningTime,
+          'return_time': returnTime,
+        }),
+      );
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    } finally {
+      client.close();
+    }
+  }
 }
