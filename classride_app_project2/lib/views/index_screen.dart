@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import './widgets/about_us_section.dart';
 import './widgets/services_section.dart';
+import './app_colors.dart';
 
 class IndexScreen extends StatefulWidget {
   const IndexScreen({super.key});
@@ -17,7 +18,7 @@ class _IndexScreenState extends State<IndexScreen> {
   bool isLogin = true;
 
   String? userRole;
-
+  final GlobalKey _servicesKey = GlobalKey();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -65,8 +66,6 @@ class _IndexScreenState extends State<IndexScreen> {
         result = await ApiService.signup(fullName: name, phoneNumber: phone, password: password);
       }
 
-      print("✅ API response: $result");
-
       final prefs = await SharedPreferences.getInstance();
 
       if (result.containsKey('role') && result['role'] != null) {
@@ -85,7 +84,6 @@ class _IndexScreenState extends State<IndexScreen> {
       _toggleLoginModal();
       _loadUserRole();
     } catch (e) {
-      print("❌ Error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('An error occurred')),
       );
@@ -95,28 +93,28 @@ class _IndexScreenState extends State<IndexScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF9F0),
+      backgroundColor: AppColors.lightBeige,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF121435),
+        backgroundColor: AppColors.deepGreen,
         title: Row(
           children: const [
-            Icon(Icons.directions_bus, color: Color(0xFFFF5722)),
+            Icon(Icons.directions_bus, color: AppColors.orange),
             SizedBox(width: 10),
-            Text('ClassRide', style: TextStyle(color: Colors.white)),
+            Text('ClassRide', style: TextStyle(color: Colors.white)),//background of the home
           ],
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       drawer: Drawer(
-        backgroundColor: const Color(0xFFEDEBCA),
+        backgroundColor: AppColors.lightBeige,
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
             const DrawerHeader(
-              decoration: BoxDecoration(color: Color(0xFF121435)),
+              decoration: BoxDecoration(color: AppColors.deepGreen),
               child: Row(
                 children: [
-                  Icon(Icons.directions_bus, color: Color(0xFFFF5722), size: 32),
+                  Icon(Icons.directions_bus, color: AppColors.orange, size: 32),
                   SizedBox(width: 10),
                   Text('ClassRide', style: TextStyle(color: Colors.white, fontSize: 24)),
                 ],
@@ -136,6 +134,21 @@ class _IndexScreenState extends State<IndexScreen> {
                 });
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.design_services),
+              title: const Text('Services'),
+              onTap: () {
+                Navigator.pop(context);
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  Scrollable.ensureVisible(
+                    _servicesKey.currentContext!,
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut,
+                  );
+                });
+              },
+            ),
+
             ListTile(
               leading: const Icon(Icons.contact_mail),
               title: const Text('Contact Us'),
@@ -200,123 +213,209 @@ class _IndexScreenState extends State<IndexScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Center(
-                  child: Text(
-                    'Welcome to ClassRide App!',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF121435),
-                    ),
-                  ),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    bool isMobile = constraints.maxWidth < 700;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (isMobile) ...[
+                          _buildImageSection(),
+                          const SizedBox(height: 30),
+                          _buildTextSection(),
+                        ] else ...[
+                          Row(
+                            children: [
+                              Expanded(child: _buildTextSection()),
+                              const SizedBox(width: 40),
+                              Expanded(child: _buildImageSection()),
+                            ],
+                          ),
+                        ],
+                      ],
+                    );
+                  },
                 ),
-                const SizedBox(height: 300), // spacing
+
+                const SizedBox(height: 200),
                 Container(
                   key: _aboutUsKey,
                   child: const AboutUsSection(),
                 ),
                 const SizedBox(height: 40),
-                const ServicesSection(), // ✅ Add this
+                Container(
+                  key: _servicesKey,
+                  child: const ServicesSection(),
+                ),
               ],
             ),
           ),
-          if (showLoginModal)
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: _toggleLoginModal,
-                child: Container(
-                  color: Colors.black.withOpacity(0.6),
-                  alignment: Alignment.center,
-                  child: GestureDetector(
-                    onTap: () {},
-                    child: Container(
-                      width: 350,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEDEBCA),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            isLogin ? 'Login' : 'Sign Up',
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF121435),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          if (!isLogin)
-                            Column(
-                              children: [
-                                TextField(
-                                  controller: _nameController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Full Name',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                ),
-                                const SizedBox(height: 15),
-                              ],
-                            ),
-                          TextField(
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            decoration: const InputDecoration(
-                              labelText: 'Phone Number',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                          const SizedBox(height: 15),
-                          TextField(
-                            controller: _passwordController,
-                            obscureText: true,
-                            decoration: const InputDecoration(
-                              labelText: 'Password',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF121435),
-                                  foregroundColor: Colors.white,
-                                ),
-                                onPressed: _toggleLoginModal,
-                                child: const Text('Cancel'),
-                              ),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFFF5722),
-                                  foregroundColor: Colors.white,
-                                ),
-                                onPressed: _handleAuthAction,
-                                child: Text(isLogin ? 'Login' : 'Sign Up'),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 15),
-                          TextButton(
-                            onPressed: _switchFormMode,
-                            child: Text(
-                              isLogin ? "Don't have an account? Sign Up" : "Already have an account? Login",
-                              style: const TextStyle(color: Color(0xFF121435)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          if (showLoginModal) _buildLoginModal(),
         ],
       ),
     );
   }
+
+  Widget _buildLoginModal() {
+    return Positioned.fill(
+      child: GestureDetector(
+        onTap: _toggleLoginModal,
+        child: Container(
+          color: Colors.black.withOpacity(0.6),
+          alignment: Alignment.center,
+          child: GestureDetector(
+            onTap: () {},
+            child: Container(
+              width: 350,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.lightBeige,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isLogin ? 'Login' : 'Sign Up',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF121435),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  if (!isLogin)
+                    Column(
+                      children: [
+                        TextField(
+                          controller: _nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Full Name',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                      ],
+                    ),
+                  TextField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Phone Number',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Password',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.deepGreen,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: _toggleLoginModal,
+                        child: const Text('Cancel'),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.orange,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: _handleAuthAction,
+                        child: Text(isLogin ? 'Login' : 'Sign Up'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 15),
+                  TextButton(
+                    onPressed: _switchFormMode,
+                    child: Text(
+                      isLogin ? "Don't have an account? Sign Up" : "Already have an account? Login",
+                      style: const TextStyle(color: Color(0xFF121435)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Hop on.\nTrack live.\nNever miss a ride with ClassRide.',
+          style: TextStyle(
+            fontSize: 50,
+            fontWeight: FontWeight.bold,
+            color: AppColors.deepGreen,
+            height: 1.3,
+          ),
+        ),
+        const SizedBox(height: 20),
+        const Text(
+          'ClassRide connects bus owners, drivers, and students in one smart platform — for hassle-free campus rides.',
+          style: TextStyle(fontSize: 16, color: Colors.black87),
+        ),
+        const SizedBox(height: 30),
+        ElevatedButton(
+          onPressed: () async {
+            const whatsappNumber = '96171125228';
+            const message = 'Hello ClassRide team, I need help';
+            final url = Uri.parse('https://wa.me/$whatsappNumber?text=${Uri.encodeComponent(message)}');
+
+            if (await canLaunchUrl(url)) {
+              await launchUrl(url, mode: LaunchMode.externalApplication);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Could not open WhatsApp')),
+              );
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orange,
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          ),
+          child: const Text(
+            'CONTACT US',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white,
+            ),
+          ),
+        ),
+
+      ],
+    );
+  }
+
+  Widget _buildImageSection() {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.asset(
+          'assets/images/bustracking.jpg',
+          fit: BoxFit.contain,
+        ),
+      ),
+    );
+  }
+
 }

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-import './widgets/driverWidgets/assigned_trips.dart';
+import 'package:classride_app_project2/views/widgets/driverWidgets/completed_Trips.dart';
+import 'package:classride_app_project2/views/widgets/driverWidgets/assigned_trips.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:classride_app_project2/views/widgets/chat_list_screen.dart';
+import './app_colors.dart'; // ✅ Import your custom colors
 
 class DriverDashboard extends StatefulWidget {
   const DriverDashboard({super.key});
@@ -9,218 +13,220 @@ class DriverDashboard extends StatefulWidget {
 }
 
 class _DriverDashboardState extends State<DriverDashboard> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _licenseController = TextEditingController();
+  String _activeSection = 'dashboard';
+  int completedTrips = 25;
+  int assignedTrips = 10;
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _hometownController = TextEditingController();
 
-  int completedTrips = 17;
-  int _selectedSection = 1; // 0 = Notifications, 1 = Dashboard, 2 = Assigned Trips, etc.
-
-  void _saveChanges() {
-    if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Information updated successfully')),
-      );
-    }
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _hometownController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF121435),
-        title: const Text(
-          'Driver Dashboard',
-          style: TextStyle(color: Colors.white),
-        ),
-        iconTheme: const IconThemeData(color: Colors.white),
+      appBar: AppBar(title: const Text("Driver Dashboard")),
+      drawer: _buildDrawer(context),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: _buildContent(),
       ),
-      drawer: Drawer(
-        backgroundColor: const Color(0xFFEDEBCA),
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Color(0xFF121435)),
-              child: Row(
-                children: [
-                  Icon(Icons.directions_bus, color: Color(0xFFFF5722), size: 32),
-                  SizedBox(width: 10),
-                  Text(
-                    'Driver Panel',
-                    style: TextStyle(color: Colors.white, fontSize: 24),
-                  ),
-                ],
-              ),
-            ),
-            _buildDrawerItem(Icons.notifications, 'Notifications', 0),
-            _buildDrawerItem(Icons.person, 'Dashboard', 1),
-            _buildDrawerItem(Icons.assignment, 'Assigned Trips', 2),
-            _buildDrawerItem(Icons.history, 'Trip History', 3),
-            _buildDrawerItem(Icons.chat, 'Chats', 4),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Home'),
-              onTap: () {
-                Navigator.pushNamed(context, '/');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Logout'),
-              onTap: () {
-                Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
-              },
-            ),
-          ],
-        ),
-      ),
-      body: _buildSectionContent(),
     );
   }
 
-  ListTile _buildDrawerItem(IconData icon, String title, int index) {
-    return ListTile(
-      selected: _selectedSection == index,
-      selectedTileColor: const Color(0xFFDAD7B5),
-      leading: Icon(icon),
-      title: Text(title),
-      onTap: () {
-        setState(() {
-          _selectedSection = index;
-        });
-        Navigator.pop(context);
-      },
-    );
-  }
-
-  Widget _buildSectionContent() {
-    switch (_selectedSection) {
-      case 0:
-        return const Center(child: Text('🔔 Notifications will appear here'));
-      case 1:
-        return _buildDashboardSection();
-      case 2:
-        return const AssignedTripsToday(trips: ['Trip to School', 'Trip to Campus']);
-      case 3:
-        return const Center(child: Text('🕒 Trip History will be shown here'));
-      case 4:
-        return const Center(child: Text('💬 Chat messages will be displayed here'));
+  Widget _buildContent() {
+    switch (_activeSection) {
+      case 'dashboard':
+        return _buildDashboardContent();
+      case 'assignedTrips':
+        return _buildAssignedTripsContent();
+      case 'tripHistory':
+        return const TripHistory();
+      case 'chat':
+        return const ChatListScreen(isDriver: true);
       default:
-        return const Center(child: Text('Invalid section'));
+        return const Center(child: Text("Section not found"));
     }
   }
 
-  Widget _buildDashboardSection() {
+  Widget _buildDashboardContent() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(32.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Dashboard Overview',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF121435),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildStatCard("Completed Trips", completedTrips, Colors.green),
+              const SizedBox(width: 20),
+              _buildStatCard("Assigned Trips", assignedTrips, Colors.orange),
+            ],
+          ),
+          const SizedBox(height: 40),
+          const Text("Edit Info", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _phoneController,
+            decoration: const InputDecoration(
+              labelText: 'Phone Number',
+              border: OutlineInputBorder(),
             ),
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _hometownController,
+            decoration: const InputDecoration(
+              labelText: 'Home Town',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3E0),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 6,
-                        offset: const Offset(0, 4),
-                      )
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Completed Trips',
-                        style: TextStyle(fontSize: 16, color: Colors.black54),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        completedTrips.toString(),
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF121435),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              const Text("License Image: ", style: TextStyle(fontSize: 16)),
+              const SizedBox(width: 10),
+              ElevatedButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.upload),
+                label: const Text("Upload"),
               ),
             ],
           ),
-          const SizedBox(height: 30),
-          const Text(
-            'Edit Driver Info',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF121435),
-            ),
-          ),
           const SizedBox(height: 20),
-          Form(
-            key: _formKey,
-            child: Column(
+          ElevatedButton(
+            onPressed: () {},
+            child: const Text("Save Changes"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssignedTripsContent() {
+    return const AssignedTripsSection();
+  }
+
+  Drawer _buildDrawer(BuildContext context) {
+    return Drawer(
+      backgroundColor: AppColors.lightBeige,
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          const DrawerHeader(
+            decoration: BoxDecoration(color: AppColors.deepGreen),
+            child: Row(
               children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Full Name',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value!.isEmpty ? 'Enter your name' : null,
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _phoneController,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone Number',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.phone,
-                  validator: (value) => value!.isEmpty ? 'Enter your phone number' : null,
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _licenseController,
-                  decoration: const InputDecoration(
-                    labelText: 'License Number',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value!.isEmpty ? 'Enter license number' : null,
-                ),
-                const SizedBox(height: 25),
-                Center(
-                  child: ElevatedButton(
-                    onPressed: _saveChanges,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF121435),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                    ),
-                    child: const Text('Save Changes'),
-                  ),
-                ),
+                Icon(Icons.directions_bus, color: AppColors.orange, size: 32),
+                SizedBox(width: 10),
+                Text('ClassRide', style: TextStyle(color: Colors.white, fontSize: 24)),
               ],
             ),
           ),
+          ListTile(
+            leading: const Icon(Icons.dashboard),
+            title: const Text('Dashboard'),
+            selected: _activeSection == 'dashboard',
+            onTap: () {
+              setState(() => _activeSection = 'dashboard');
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.assignment),
+            title: const Text('Assigned Trips'),
+            selected: _activeSection == 'assignedTrips',
+            onTap: () {
+              setState(() => _activeSection = 'assignedTrips');
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.history),
+            title: const Text('Trip History'),
+            selected: _activeSection == 'tripHistory',
+            onTap: () {
+              setState(() => _activeSection = 'tripHistory');
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.chat),
+            title: const Text('Chat'),
+            selected: _activeSection == 'chat',
+            onTap: () {
+              setState(() => _activeSection = 'chat');
+              Navigator.pop(context);
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout),
+            title: const Text('Logout'),
+            onTap: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.clear();
+              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String title, int count, Color color) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+        elevation: 6,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          height: 150,
+          width: 150,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: color.withOpacity(0.9),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('$count', style: const TextStyle(fontSize: 32, color: Colors.white, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text(title, style: const TextStyle(fontSize: 14, color: Colors.white)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showTripDetailsDialog(BuildContext context, Map<String, dynamic> trip) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Trip #${trip['id']} on ${trip['date']}"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            ListTile(
+              title: Text("Dana Amasha"),
+              trailing: Icon(Icons.check_circle, color: Colors.green),
+            ),
+            ListTile(
+              title: Text("Ahmad Zaid"),
+              trailing: Icon(Icons.cancel, color: Colors.red),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Close"))
         ],
       ),
     );

@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
+import 'package:classride_app_project2/views/widgets/studentWidgets/assigned_trip_section.dart';
+import './app_colors.dart'; // ✅ Import your custom colors
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:classride_app_project2/views/widgets/chat_screen.dart';
+import 'package:classride_app_project2/views/widgets/chatting.dart';
+import 'package:classride_app_project2/views/widgets/chat_list_screen.dart';
+
 
 class StudentDashboard extends StatefulWidget {
   const StudentDashboard({super.key});
@@ -15,6 +22,15 @@ class _StudentDashboardState extends State<StudentDashboard> {
   bool _todayReturnAttendance = false;
   bool _tomorrowMorningAttendance = false;
   bool _tomorrowReturnAttendance = false;
+  final Map<String, int> dayMap = {
+    "Monday": 1,
+    "Tuesday": 2,
+    "Wednesday": 3,
+    "Thursday": 4,
+    "Friday": 5,
+    "Saturday": 6,
+    "Sunday": 7,
+  };
 
   // Schedule times
   TimeOfDay? _todayMorningTime;
@@ -28,6 +44,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
   ];
   Map<String, TimeOfDay?> _weeklyMorningTimes = {};
   Map<String, TimeOfDay?> _weeklyReturnTimes = {};
+  Map<String, bool> _weeklyMorningAttendance = {};
+  Map<String, bool> _weeklyReturnAttendance = {};
 
   String _activeSection = 'dashboard';
 
@@ -81,8 +99,13 @@ class _StudentDashboardState extends State<StudentDashboard> {
       for (final item in weeklyData) {
         final int dayNum = item['day_of_week'];
         final String dayName = _daysOfWeek[dayNum - 1];
+
         _weeklyMorningTimes[dayName] = _parseTime(item['morning_time']);
         _weeklyReturnTimes[dayName] = _parseTime(item['return_time']);
+
+        _weeklyMorningAttendance[dayName] = item['attendance_morning'] ?? false;
+        _weeklyReturnAttendance[dayName] = item['attendance_return'] ?? false;
+
       }
     });
   }
@@ -119,7 +142,9 @@ class _StudentDashboardState extends State<StudentDashboard> {
   Future<void> _editScheduleTime(BuildContext context, String day, bool isMorning) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.now(),
+      initialTime: isMorning
+          ? (_weeklyMorningTimes[day] ?? TimeOfDay(hour: 7, minute: 0))
+          : (_weeklyReturnTimes[day] ?? TimeOfDay(hour: 15, minute: 0)),
     );
 
     if (picked != null) {
@@ -135,10 +160,13 @@ class _StudentDashboardState extends State<StudentDashboard> {
       final TimeOfDay returnT = _weeklyReturnTimes[day] ?? TimeOfDay(hour: 15, minute: 0);
 
       final success = await ApiService.updateWeeklySchedule(
-        dayOfWeek: day,
+        dayOfWeek: dayMap[day]!, // ✅ named parameter
         morningTime: _formatTimeForApi(morning),
         returnTime: _formatTimeForApi(returnT),
+        attendanceMorning: _weeklyMorningAttendance[day] ?? false,
+        attendanceReturn: _weeklyReturnAttendance[day] ?? false,
       );
+
 
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -175,12 +203,26 @@ class _StudentDashboardState extends State<StudentDashboard> {
     return Scaffold(
       appBar: AppBar(title: const Text("Student Dashboard")),
       drawer: _buildDrawer(context),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: _activeSection == 'dashboard' ? _buildDashboardContent() : _buildAssignedTripContent(),
-      ),
+      body: () {
+        switch (_activeSection) {
+          case 'dashboard':
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: _buildDashboardContent(),
+            );
+          case 'assignedTrip':
+            return const AssignedTripSection();
+          case 'chat':
+            return const ChatListScreen(isDriver: false);
+
+
+          default:
+            return const Center(child: Text("Section not found"));
+        }
+      }(),
     );
   }
+
 
   Widget _buildDashboardContent() {
     return Column(
@@ -213,6 +255,9 @@ class _StudentDashboardState extends State<StudentDashboard> {
           title: 'Return Attendance (Today)',
           value: _todayReturnAttendance,
           onChanged: (val) async {
+            bool confirmed = await _confirmUpdate(context, "today's return attendance");
+            if (!confirmed) return;
+
             final success = await ApiService.updateAttendance(
               date: DateTime.now().toIso8601String().split('T')[0],
               isMorning: false,
@@ -230,6 +275,9 @@ class _StudentDashboardState extends State<StudentDashboard> {
           title: 'Morning Attendance (Tomorrow)',
           value: _tomorrowMorningAttendance,
           onChanged: (val) async {
+            bool confirmed = await _confirmUpdate(context, "tomorrow's morning attendance");
+            if (!confirmed) return;
+
             final success = await ApiService.updateAttendance(
               date: DateTime.now().add(const Duration(days: 1)).toIso8601String().split('T')[0],
               isMorning: true,
@@ -245,6 +293,9 @@ class _StudentDashboardState extends State<StudentDashboard> {
           title: 'Return Attendance (Tomorrow)',
           value: _tomorrowReturnAttendance,
           onChanged: (val) async {
+            bool confirmed = await _confirmUpdate(context, "tomorrow's return attendance");
+            if (!confirmed) return;
+
             final success = await ApiService.updateAttendance(
               date: DateTime.now().add(const Duration(days: 1)).toIso8601String().split('T')[0],
               isMorning: false,
@@ -267,7 +318,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
                 title: Text("Day: ${DateFormat('EEEE').format(DateTime.now())}"),
               ),
               ListTile(
-                leading: const Icon(Icons.wb_sunny),
+                leading: const Icon(Icons.wb_sunny, color: AppColors.orange),
                 title: const Text("Morning Time"),
                 subtitle: Text(_formatTime(_todayMorningTime)),
                 trailing: IconButton(
@@ -318,7 +369,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
                 title: Text("Day: ${DateFormat('EEEE').format(DateTime.now().add(const Duration(days: 1)))}"),
               ),
               ListTile(
-                leading: const Icon(Icons.wb_sunny),
+                leading: const Icon(Icons.wb_sunny,color: AppColors.orange),
                 title: const Text("Morning Time"),
                 subtitle: Text(_formatTime(_tomorrowMorningTime)),
                 trailing: IconButton(
@@ -357,70 +408,108 @@ class _StudentDashboardState extends State<StudentDashboard> {
             }
           },
         ),
+
+        const SizedBox(height: 8),
+
         const SizedBox(height: 24),
         Text("Weekly Schedule", style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 8),
-        Table(
-          border: TableBorder.all(color: Colors.grey),
-          columnWidths: const {
-            0: FlexColumnWidth(2),
-            1: FlexColumnWidth(2),
-            2: FlexColumnWidth(2),
-            3: FlexColumnWidth(1.5),
-            4: FlexColumnWidth(1.5),
-          },
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            const TableRow(
-              decoration: BoxDecoration(color: Colors.blueAccent),
-              children: [
-                Padding(padding: EdgeInsets.all(8), child: Text("Day", style: TextStyle(color: Colors.white))),
-                Padding(padding: EdgeInsets.all(8), child: Text("Morning Time", style: TextStyle(color: Colors.white))),
-                Padding(padding: EdgeInsets.all(8), child: Text("Return Time", style: TextStyle(color: Colors.white))),
-                Padding(padding: EdgeInsets.all(8), child: Text("Edit M")),
-                Padding(padding: EdgeInsets.all(8), child: Text("Edit R")),
-              ],
+            ElevatedButton.icon(
+              icon: const Icon(Icons.add),
+              label: const Text("Add Day"),
+              onPressed: () => _showAddDayDialog(context),
             ),
-            ..._daysOfWeek.map((day) {
-              return TableRow(
-                children: [
-                  Padding(padding: const EdgeInsets.all(8), child: Text(day)),
-                  Padding(padding: const EdgeInsets.all(8), child: Text(_formatTime(_weeklyMorningTimes[day]))),
-                  Padding(padding: const EdgeInsets.all(8), child: Text(_formatTime(_weeklyReturnTimes[day]))),
-                  IconButton(icon: const Icon(Icons.access_time), onPressed: () => _editScheduleTime(context, day, true)),
-                  IconButton(icon: const Icon(Icons.access_time), onPressed: () => _editScheduleTime(context, day, false)),
-                ],
-              );
-            }).toList(),
+            const SizedBox(width: 10),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.remove),
+              label: const Text("Remove Day"),
+              onPressed: () => _showRemoveDayDialog(context),
+            ),
           ],
         ),
+        const SizedBox(height: 8),
+    Table(
+    border: TableBorder.all(color: Colors.grey),
+    columnWidths: const {
+    0: FlexColumnWidth(2.5),
+    1: FlexColumnWidth(2),
+    2: FlexColumnWidth(2),
+    3: FlexColumnWidth(1.5),
+    4: FlexColumnWidth(1.5),
+    5: FlexColumnWidth(2),
+    6: FlexColumnWidth(2),
+    },
+    children: [
+    const TableRow(
+    decoration: BoxDecoration(color: AppColors.softGreen),
+    children: [
+    Padding(padding: EdgeInsets.all(8), child: Text("Day", style: TextStyle(color: Colors.white))),
+    Padding(padding: EdgeInsets.all(8), child: Text("Morning Time", style: TextStyle(color: Colors.white))),
+    Padding(padding: EdgeInsets.all(8), child: Text("Return Time", style: TextStyle(color: Colors.white))),
+    Padding(padding: EdgeInsets.all(8), child: Text("Att. M")),
+    Padding(padding: EdgeInsets.all(8), child: Text("Att. R")),
+    ],
+    ),
+    ..._daysOfWeek.map((day) {
+    return TableRow(
+    children: [
+    Padding(padding: const EdgeInsets.all(8), child: Text(day)),
+      Padding(
+        padding: const EdgeInsets.all(8),
+        child: IconButton(
+          icon: const Icon(Icons.access_time),
+          onPressed: () => _editScheduleTime(context, day, true),
+        ),
+      ),
+
+      Padding(
+        padding: const EdgeInsets.all(8),
+        child: IconButton(
+          icon: const Icon(Icons.access_time),
+          onPressed: () => _editScheduleTime(context, day, false),
+        ),
+      ),
+
+      // ✅ Morning Attendance Switch
+    Padding(
+    padding: const EdgeInsets.all(8),
+    child: Switch(
+    value: _weeklyMorningAttendance[day] ?? false,
+    onChanged: (bool val) {
+    setState(() => _weeklyMorningAttendance[day] = val);
+    _sendAttendanceToBackend(day, true, val);
+    },
+      activeColor: AppColors.deepGreen,          // ON state (thumb)
+      inactiveThumbColor: AppColors.orange,
+    ),
+    ),
+
+    // ✅ Return Attendance Switch
+    Padding(
+    padding: const EdgeInsets.all(8),
+    child: Switch(
+    value: _weeklyReturnAttendance[day] ?? false,
+    onChanged: (bool val) {
+    setState(() => _weeklyReturnAttendance[day] = val);
+    _sendAttendanceToBackend(day, false, val);
+    },
+      inactiveThumbColor: AppColors.orange,      // OFF state (thumb)
+
+    ),
+    ),
+    ],
+    );
+    }).toList(),
+    ],
+    ),
+
       ],
     );
   }
 
-  Widget _buildAssignedTripContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text("Assigned Trip", style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 16),
-        Card(
-          child: ListTile(
-            leading: const Icon(Icons.wb_sunny),
-            title: const Text("Morning Trip"),
-            subtitle: const Text("Pickup: 7:30 AM from Home\nDestination: University Main Gate"),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Card(
-          child: ListTile(
-            leading: const Icon(Icons.nights_stay),
-            title: const Text("Return Trip"),
-            subtitle: const Text("Pickup: 3:15 PM from University\nDestination: Home Location"),
-          ),
-        ),
-      ],
-    );
-  }
+
 
   Widget _buildAttendanceCard({
     required String title,
@@ -434,8 +523,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
         trailing: Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: Colors.green,
-          inactiveThumbColor: Colors.red,
+          activeColor: AppColors.deepGreen,          // ON state (thumb)
+          inactiveThumbColor: AppColors.orange,      // OFF state (thumb)
         ),
       ),
     );
@@ -443,12 +532,21 @@ class _StudentDashboardState extends State<StudentDashboard> {
 
   Drawer _buildDrawer(BuildContext context) {
     return Drawer(
+      backgroundColor: AppColors.lightBeige,
+
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
+
           const DrawerHeader(
-            decoration: BoxDecoration(color: Colors.blue),
-            child: Text('Student', style: TextStyle(color: Colors.white, fontSize: 24)),
+            decoration: BoxDecoration(color: AppColors.deepGreen),
+            child: Row(
+              children: [
+                Icon(Icons.directions_bus, color: AppColors.orange, size: 32),
+                SizedBox(width: 10),
+                Text('ClassRide', style: TextStyle(color: Colors.white, fontSize: 24)),
+              ],
+            ),
           ),
           ListTile(
             leading: const Icon(Icons.dashboard),
@@ -474,10 +572,17 @@ class _StudentDashboardState extends State<StudentDashboard> {
             onTap: () => Navigator.pop(context),
           ),
           ListTile(
-            leading: const Icon(Icons.chat),
-            title: const Text('Chats'),
-            onTap: () => Navigator.pop(context),
+              leading: const Icon(Icons.chat),
+              title: const Text('Chats'),
+              onTap: () {
+                setState(() {
+                  _activeSection = 'chat';
+                });
+                Navigator.pop(context);
+              }
+
           ),
+
           ListTile(
             leading: const Icon(Icons.home),
             title: const Text('Home'),
@@ -486,10 +591,142 @@ class _StudentDashboardState extends State<StudentDashboard> {
           ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Logout'),
-            onTap: () => Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false),
+            onTap: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.clear(); // ✅ Clear token and role
+              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+            },
+
+
           ),
         ],
       ),
     );
   }
+
+
+  Future<void> _sendAttendanceToBackend(String dayName, bool isMorning, bool value) async {
+    final TimeOfDay morningTime = _weeklyMorningTimes[dayName] ?? TimeOfDay(hour: 7, minute: 0);
+    final TimeOfDay returnTime = _weeklyReturnTimes[dayName] ?? TimeOfDay(hour: 15, minute: 0);
+
+    final bool attMorning = _weeklyMorningAttendance[dayName] ?? false;
+    final bool attReturn = _weeklyReturnAttendance[dayName] ?? false;
+
+    final success = await ApiService.updateWeeklySchedule(
+      dayOfWeek: dayMap[dayName]!, // ✅ Convert String -> int
+      morningTime: _formatTimeForApi(morningTime),
+      returnTime: _formatTimeForApi(returnTime),
+      attendanceMorning: attMorning,
+      attendanceReturn: attReturn,
+    );
+
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("⚠️ Failed to update weekly attendance")),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("✅ $dayName schedule updated successfully")),
+      );
+
+    }
+  }
+
+  void _showAddDayDialog(BuildContext context) {
+    final _newDayController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Add New Day"),
+        content: TextField(
+          controller: _newDayController,
+          decoration: const InputDecoration(labelText: "Enter day name (e.g., Sunday)"),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              final newDay = _newDayController.text.trim();
+              if (newDay.isNotEmpty && !_daysOfWeek.contains(newDay)) {
+                setState(() {
+                  _daysOfWeek.add(newDay);
+                  _weeklyMorningAttendance[newDay] = false;
+                  _weeklyReturnAttendance[newDay] = false;
+                  _weeklyMorningTimes[newDay] = TimeOfDay(hour: 7, minute: 0);
+                  _weeklyReturnTimes[newDay] = TimeOfDay(hour: 15, minute: 0);
+                });
+                Navigator.pop(context);
+              }
+            },
+            child: const Text("Add"),
+          ),
+        ],
+      ),
+    );
+  }
+  void _showRemoveDayDialog(BuildContext context) {
+    String? _selectedDayToRemove;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Remove Day"),
+              content: DropdownButton<String>(
+                value: _selectedDayToRemove,
+                hint: const Text("Select day to remove"),
+                isExpanded: true,
+                items: _daysOfWeek.map((day) {
+                  return DropdownMenuItem(value: day, child: Text(day));
+                }).toList(),
+                onChanged: (val) {
+                  setState(() => _selectedDayToRemove = val);
+                },
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    if (_selectedDayToRemove != null) {
+                      final success = await ApiService.deleteWeeklyScheduleDay(_selectedDayToRemove!);
+                      if (success) {
+                        setState(() {
+                          _weeklyMorningAttendance.remove(_selectedDayToRemove);
+                          _weeklyReturnAttendance.remove(_selectedDayToRemove);
+                          _weeklyMorningTimes.remove(_selectedDayToRemove);
+                          _weeklyReturnTimes.remove(_selectedDayToRemove);
+                          _daysOfWeek.remove(_selectedDayToRemove);
+                        });
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("✅ ${_selectedDayToRemove!} removed successfully")),
+                        );
+                      } else {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("❌ Failed to delete day from backend")),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text("Remove"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+
 }
