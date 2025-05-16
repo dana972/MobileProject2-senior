@@ -5,17 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="99dd9297-6de1-4309-b012-7a8b8149ec8b" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/classride_app_project2/lib/utils/encryption_helper.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_app_project2/lib/utils/room_helper.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_app_project2/lib/views/app_colors.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_app_project2/lib/views/driver_tracking_page.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_app_project2/lib/views/student_tracking_page.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_app_project2/lib/views/widgets/chat_list_screen.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_app_project2/lib/views/widgets/chat_screen.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_app_project2/lib/views/widgets/chatting.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_app_project2/lib/views/widgets/driverWidgets/completed_Trips.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_app_project2/lib/views/widgets/studentWidgets/LiveMapWidget.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_app_project2/lib/views/widgets/studentWidgets/assigned_trip_section.dart" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/classride_backend/api/controllers/chattingController.js" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/classride_backend/api/controllers/driverDashController.js" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/classride_backend/api/controllers/studentAssignedTripsController.js" afterDir="false" />
@@ -28,28 +17,7 @@
       <change afterPath="$PROJECT_DIR$/classride_backend/website/routes/busOwnerRoutes.js" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/classride_backend/website/views/busOwnerDashboard.ejs" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/classride_backend/website/views/index.ejs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Dart_Packages.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/senior.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_app_project2/android/app/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/android/app/build.gradle.kts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_app_project2/android/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/android/app/src/main/AndroidManifest.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_app_project2/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/lib/main.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_app_project2/lib/services/api_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/lib/services/api_service.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_app_project2/lib/views/driver_dashboard.dart" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/lib/views/driver_dashboard.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_app_project2/lib/views/index_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/lib/views/index_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_app_project2/lib/views/student_dashboard.dart" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/lib/views/student_dashboard.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_app_project2/lib/views/widgets/about_us_section.dart" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/lib/views/widgets/about_us_section.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_app_project2/lib/views/widgets/driverWidgets/assigned_trips.dart" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/lib/views/widgets/driverWidgets/assigned_trips.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_app_project2/lib/views/widgets/services_section.dart" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/lib/views/widgets/services_section.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_app_project2/macos/Flutter/GeneratedPluginRegistrant.swift" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/macos/Flutter/GeneratedPluginRegistrant.swift" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_app_project2/pubspec.lock" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/pubspec.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_app_project2/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/pubspec.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_app_project2/windows/flutter/generated_plugin_registrant.cc" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/windows/flutter/generated_plugin_registrant.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_app_project2/windows/flutter/generated_plugins.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/windows/flutter/generated_plugins.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/classride_backend" beforeDir="false" afterPath="$PROJECT_DIR$/classride_backend" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/classride_backend/.env" beforeDir="false" afterPath="$PROJECT_DIR$/classride_backend/.env" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/classride_backend/api/controllers/authController.js" beforeDir="false" afterPath="$PROJECT_DIR$/classride_backend/api/controllers/authController.js" afterDir="false" />
@@ -73,7 +41,7 @@
     <option name="formatViaClangd" value="false" />
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/classride_backend" />
   </component>
   <component name="ProjectColorInfo"><![CDATA[{
   "customColor": "",
