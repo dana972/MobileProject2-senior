@@ -24,7 +24,7 @@ class _LiveMapWidgetState extends State<LiveMapWidget> {
   }
 
   void _initSocket() {
-    socket = IO.io('http://192.168.0.105:5000', {
+    socket = IO.io('http://192.168.0.109:5000', {
       'transports': ['websocket'],
       'autoConnect': true,
     });
@@ -32,8 +32,9 @@ class _LiveMapWidgetState extends State<LiveMapWidget> {
     socket.connect();
 
     socket.onConnect((_) {
-      print("🧑‍🎓 Student connected to Socket");
       socket.emit('join_trip_room', 'trip_${widget.tripId}');
+      print("🧑‍🎓 Student connected to Socket");
+
     });
 
     socket.on('trip_location_update', (data) async {
@@ -44,6 +45,7 @@ class _LiveMapWidgetState extends State<LiveMapWidget> {
         if (data is String) {
           data = jsonDecode(data);
         }
+        print("🎯 Trip ID match: ${widget.tripId} (incoming tripId: ${data['tripId']})");
 
         final lat = data['latitude'];
         final lng = data['longitude'];

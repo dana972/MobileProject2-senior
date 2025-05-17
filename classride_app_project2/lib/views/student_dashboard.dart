@@ -39,9 +39,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
   TimeOfDay? _tomorrowReturnTime;
 
   // Weekly schedule
-  final List<String> _daysOfWeek = [
-    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
-  ];
+  final List<String> _daysOfWeek = []; // <- start empty
+
   Map<String, TimeOfDay?> _weeklyMorningTimes = {};
   Map<String, TimeOfDay?> _weeklyReturnTimes = {};
   Map<String, bool> _weeklyMorningAttendance = {};
@@ -96,19 +95,24 @@ class _StudentDashboardState extends State<StudentDashboard> {
     final weeklyData = await ApiService.fetchWeeklySchedule();
 
     setState(() {
+      _daysOfWeek.clear(); // 🧹 Clear existing list
+
       for (final item in weeklyData) {
         final int dayNum = item['day_of_week'];
-        final String dayName = _daysOfWeek[dayNum - 1];
+        final String dayName = DateFormat('EEEE').format(DateTime(2024, 1, dayNum));
+
+        if (!_daysOfWeek.contains(dayName)) {
+          _daysOfWeek.add(dayName); // ✅ Add day from DB
+        }
 
         _weeklyMorningTimes[dayName] = _parseTime(item['morning_time']);
         _weeklyReturnTimes[dayName] = _parseTime(item['return_time']);
-
-        _weeklyMorningAttendance[dayName] = item['attendance_morning'] ?? false;
-        _weeklyReturnAttendance[dayName] = item['attendance_return'] ?? false;
-
+        _weeklyMorningAttendance[dayName] = item['attendance_morning'] ?? true;
+        _weeklyReturnAttendance[dayName] = item['attendance_return'] ?? true;
       }
     });
   }
+
 
   Future<void> _pickTime({
     required BuildContext context,
@@ -649,16 +653,36 @@ class _StudentDashboardState extends State<StudentDashboard> {
             child: const Text("Cancel"),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               final newDay = _newDayController.text.trim();
+
               if (newDay.isNotEmpty && !_daysOfWeek.contains(newDay)) {
                 setState(() {
                   _daysOfWeek.add(newDay);
-                  _weeklyMorningAttendance[newDay] = false;
-                  _weeklyReturnAttendance[newDay] = false;
-                  _weeklyMorningTimes[newDay] = TimeOfDay(hour: 7, minute: 0);
+                  _weeklyMorningTimes[newDay] = TimeOfDay(hour: 7, minute: 30);
                   _weeklyReturnTimes[newDay] = TimeOfDay(hour: 15, minute: 0);
+                  _weeklyMorningAttendance[newDay] = true; // ✅ default true
+                  _weeklyReturnAttendance[newDay] = true;  // ✅ default true
                 });
+
+                final success = await ApiService.updateWeeklySchedule(
+                  dayOfWeek: dayMap[newDay]!,
+                  morningTime: _formatTimeForApi(_weeklyMorningTimes[newDay]!),
+                  returnTime: _formatTimeForApi(_weeklyReturnTimes[newDay]!),
+                  attendanceMorning: true,
+                  attendanceReturn: true,
+                );
+
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("✅ $newDay added successfully.")),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("❌ Failed to save $newDay to backend.")),
+                  );
+                }
+
                 Navigator.pop(context);
               }
             },

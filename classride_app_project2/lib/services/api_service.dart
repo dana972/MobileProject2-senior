@@ -2,11 +2,14 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'dart:convert';
+import 'dart:io';
 class ApiService {
   static final String authUrl = '${dotenv.env['API_URL'] ?? 'http://127.0.0.1:5000'}/api/auth';
   static final String studentUrl = dotenv.env['STUDENT_API_URL'] ?? 'http://127.0.0.1:5000/api/student';
   static final String driverUrl = dotenv.env['DRIVER_API_URL'] ?? 'http://127.0.0.1:5000/api/driver';
+  static final String ownerUrl = '${dotenv.env['API_URL'] ?? 'http://127.0.0.1:5000'}/api/owner';
+
   static final String chatUrl =
       '${dotenv.env['API_URL'] ?? 'http://127.0.0.1:5000'}/api/chat';
   static Future<Map<String, dynamic>> signup({
@@ -600,6 +603,101 @@ class ApiService {
       client.close();
     }
   }
+
+
+  static Future<Map<String, dynamic>> submitOwnerApplication({
+    required String homeTown,
+    required File logoFile,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token == null) return {'success': false, 'message': 'Not authenticated'};
+
+    final uri = Uri.parse('$ownerUrl/apply');
+    final request = http.MultipartRequest('POST', uri)
+      ..headers['Authorization'] = 'Bearer $token'
+      ..fields['homeTown'] = homeTown
+      ..files.add(await http.MultipartFile.fromPath('busLogo', logoFile.path));
+
+    try {
+      final streamed = await request.send();
+      final response = await http.Response.fromStream(streamed);
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': '✅ Application submitted successfully'};
+      } else {
+        return {'success': false, 'message': '❌ Submission failed'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': '❌ Error: $e'};
+    }
+  }
+  static Future<List<Map<String, String>>> fetchOwnerPhoneNamePairs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    final uri = Uri.parse('${dotenv.env['API_URL'] ?? 'http://127.0.0.1:5000'}/api/student/known-owners');
+
+    try {
+      final response = await http.get(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final owners = data['owners'] as List<dynamic>;
+
+        return owners.map<Map<String, String>>((e) {
+          return {
+            'name': e['name'].toString(),
+            'phone': e['phone'].toString(),
+          };
+        }).toList();
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print("❌ Error fetching owner phone-name list: $e");
+      return [];
+    }
+  }
+
+  static Future<bool> sendJoinRequest({
+    required String ownerPhone,
+    required String university,
+    required String address,
+    required List<Map<String, dynamic>> schedule,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+
+    final uri = Uri.parse('${dotenv.env['API_URL'] ?? 'http://127.0.0.1:5000'}/api/student/join-known-owner');
+
+    try {
+      final response = await http.post(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'ownerPhone': ownerPhone,
+          'university': university,
+          'address': address,
+          'schedule': schedule, // example: [{ "day_of_week": 1, "morning_time": "07:30", "return_time": "15:00" }]
+        }),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('❌ Error sending join request: $e');
+      return false;
+    }
+  }
+
+
 
 }
 

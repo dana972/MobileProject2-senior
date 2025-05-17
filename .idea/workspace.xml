@@ -5,32 +5,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="99dd9297-6de1-4309-b012-7a8b8149ec8b" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/classride_backend/api/controllers/chattingController.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_backend/api/controllers/driverDashController.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_backend/api/controllers/studentAssignedTripsController.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_backend/api/controllers/studentDashController.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_backend/api/middlewares/authMiddleware.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_backend/api/routes/chattingRoutes.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_backend/api/routes/driverRoutes.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_backend/api/routes/studentRoutes.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_backend/website/controllers/busOwnerController.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_backend/website/routes/busOwnerRoutes.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_backend/website/views/busOwnerDashboard.ejs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classride_backend/website/views/index.ejs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_backend" beforeDir="false" afterPath="$PROJECT_DIR$/classride_backend" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_backend/.env" beforeDir="false" afterPath="$PROJECT_DIR$/classride_backend/.env" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_backend/api/controllers/authController.js" beforeDir="false" afterPath="$PROJECT_DIR$/classride_backend/api/controllers/authController.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_backend/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/classride_backend/app.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_backend/node_modules/.package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/classride_backend/node_modules/.package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_backend/node_modules/iconv-lite/.idea/codeStyles/Project.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_backend/node_modules/iconv-lite/.idea/codeStyles/codeStyleConfig.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_backend/node_modules/iconv-lite/.idea/iconv-lite.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_backend/node_modules/iconv-lite/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_backend/node_modules/iconv-lite/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_backend/node_modules/iconv-lite/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_backend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/classride_backend/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classride_backend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/classride_backend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/classride_app_project2/lib/services/api_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/lib/services/api_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/classride_app_project2/lib/views/owner_dashboard.dart" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/lib/views/owner_dashboard.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/classride_app_project2/lib/views/student_dashboard.dart" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/lib/views/student_dashboard.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/classride_app_project2/lib/views/widgets/services_section.dart" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/lib/views/widgets/services_section.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/classride_app_project2/lib/views/widgets/studentWidgets/LiveMapWidget.dart" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/lib/views/widgets/studentWidgets/LiveMapWidget.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/classride_app_project2/linux/flutter/generated_plugin_registrant.cc" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/linux/flutter/generated_plugin_registrant.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/classride_app_project2/linux/flutter/generated_plugins.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/linux/flutter/generated_plugins.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/classride_app_project2/macos/Flutter/GeneratedPluginRegistrant.swift" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/macos/Flutter/GeneratedPluginRegistrant.swift" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/classride_app_project2/pubspec.lock" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/pubspec.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/classride_app_project2/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/pubspec.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/classride_app_project2/windows/flutter/generated_plugin_registrant.cc" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/windows/flutter/generated_plugin_registrant.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/classride_app_project2/windows/flutter/generated_plugins.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/classride_app_project2/windows/flutter/generated_plugins.cmake" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,31 +28,31 @@
     <option name="formatViaClangd" value="false" />
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/classride_backend" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "customColor": "",
-  "associatedIndex": 5
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 5
+}</component>
   <component name="ProjectId" id="2xAItE7wAiDhej6R6JWR9LprlFE" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "cf.first.check.clang-format": "false",
-    "cidr.known.project.marker": "true",
-    "dart.analysis.tool.window.visible": "false",
-    "git-widget-placeholder": "main",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/senior",
-    "show.migrate.to.gradle.popup": "false"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/senior&quot;,
+    &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;
   }
-}]]></component>
+}</component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -82,7 +69,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="Dart">
           <url>file://$PROJECT_DIR$/classride_app_project2/lib/views/owner_dashboard.dart</url>
-          <line>7</line>
+          <line>63</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="Dart">
